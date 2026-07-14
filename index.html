@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Presupuestos Cloud Pro</title>
+    <title>Gestor de Presupuestos Cloud Pro (Realtime Database)</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -15,6 +15,7 @@
             --border: #e2e8f0;
             --highlight: #fef08a;
             --highlight-border: #eab308;
+            --success: #10b981;
         }
 
         body {
@@ -22,8 +23,74 @@
             background-color: var(--bg);
             color: var(--text-main);
             margin: 0;
-            padding: 24px;
+            padding: 0;
             line-height: 1.5;
+        }
+
+        /* PANTALLA DE LOGUEO */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #0f172a;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2000;
+            transition: opacity 0.3s ease;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .login-card h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+            color: #1e293b;
+        }
+
+        .login-card p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .google-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background-color: white;
+            color: #374151;
+            border: 1px solid var(--border);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+
+        .google-btn:hover {
+            background-color: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+
+        /* CONTENEDOR PRINCIPAL (GESTIONADO) */
+        .app-container {
+            display: none; /* Se muestra al iniciar sesión */
+            padding: 24px;
         }
 
         .container {
@@ -31,7 +98,7 @@
             margin: 0 auto;
         }
 
-        /* HEADER Y BOTONES */
+        /* HEADER */
         .app-header {
             display: flex;
             justify-content: space-between;
@@ -54,6 +121,31 @@
             font-size: 0.95rem;
         }
 
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 6px 14px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+        }
+
+        /* BOTONES */
         button {
             display: inline-flex;
             align-items: center;
@@ -86,6 +178,13 @@
             background-color: #f1f5f9;
         }
 
+        .btn-success {
+            background-color: var(--success);
+        }
+        .btn-success:hover {
+            background-color: #059669;
+        }
+
         .btn-danger {
             background-color: #ef4444;
         }
@@ -102,6 +201,7 @@
             border: 1px solid var(--border);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
             margin-bottom: 24px;
+            position: relative;
         }
 
         .card h2 {
@@ -112,6 +212,19 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .budget-badge {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background-color: #eff6ff;
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: 1px solid #bfdbfe;
         }
 
         /* FORMULARIOS */
@@ -151,25 +264,23 @@
             box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
         }
 
-        .match-highlight {
-            background-color: var(--highlight) !important;
-            border-color: var(--highlight-border) !important;
-        }
-
-        /* SUGERENCIAS DE BÚSQUEDA DE CLIENTES */
+        /* SUGERENCIAS DE BÚSQUEDA */
         .suggestions-box {
             background: white;
             border: 1px solid var(--border);
             border-radius: 8px;
             margin-top: 8px;
-            max-height: 150px;
+            max-height: 200px;
             overflow-y: auto;
             display: none;
+            position: absolute;
+            width: 100%;
+            z-index: 100;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         .suggestion-item {
-            padding: 10px 14px;
+            padding: 12px 14px;
             cursor: pointer;
             font-size: 0.9rem;
             border-bottom: 1px solid #f1f5f9;
@@ -228,7 +339,7 @@
 
         .search-bar {
             flex: 1;
-            max-width: 400px;
+            max-width: 450px;
             min-width: 250px;
             position: relative;
         }
@@ -304,7 +415,7 @@
                 background-color: white;
                 padding: 0;
             }
-            .no-print, button, .delete-col, .search-bar, .suggestions-box {
+            .no-print, button, .delete-col, .search-bar, .suggestions-box, .budget-badge, .login-screen {
                 display: none !important;
             }
             .card {
@@ -339,98 +450,120 @@
 </head>
 <body>
 
-<div class="container">
-    <header class="app-header no-print">
-        <div class="header-title">
-            <h1>Generador de Presupuestos Cloud</h1>
-            <p>Sincronizado en tiempo real con Firebase Firestore</p>
-        </div>
-        <button type="button" class="btn-outline" onclick="abrirModal()">
-            🏢 Mi Empresa
+<div id="login-container" class="login-screen">
+    <div class="login-card">
+        <h2>Bienvenido</h2>
+        <p>Inicia sesión con tu cuenta de Google para gestionar tus presupuestos de forma segura en tiempo real.</p>
+        <button id="btn-login-google" class="google-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.92h6.69c-.29 1.5-.1.14 1.14 2.47l3.31-2.57c1.93-1.78 3.06-4.4 3.06-7.3s-.01 0-.01 0z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.97-1.08 7.96-2.91l-3.31-2.57c-1.1.74-2.5 1.18-4.15 1.18-3.2 0-5.91-2.16-6.87-5.07L2.18 17.51C4.15 21.41 8.2 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.13 14.63c-.25-.75-.39-1.55-.39-2.38s.14-1.63.39-2.38L2.18 7.03C1.04 9.29.38 11.83.38 14.5s.66 5.21 1.8 7.47l2.95-2.34s0-.01 0-.01z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.43-3.43C17.95 1.19 15.24 0 12 0 8.2 0 4.15 2.59 2.18 6.49l2.95 2.34C6.09 5.91 8.8 4.75 12 4.75z"/>
+            </svg>
+            Acceder con Google
         </button>
-    </header>
-
-    <div class="card">
-        <h2>👤 Datos del Cliente</h2>
-        <div class="grid-forms">
-            <div class="form-group">
-                <label for="cli-nit">NIT / CC</label>
-                <input type="text" id="cli-nit" class="searchable-client" placeholder="Ej: 1.015.123.456">
-            </div>
-            <div class="form-group">
-                <label for="cli-nombre">Nombre Completo</label>
-                <input type="text" id="cli-nombre" class="searchable-client" placeholder="Juan Pérez">
-            </div>
-            <div class="form-group">
-                <label for="cli-ciudad">Ciudad</label>
-                <input type="text" id="cli-ciudad" class="searchable-client" placeholder="Medellín">
-            </div>
-            <div class="form-group">
-                <label for="cli-telefono">Teléfono</label>
-                <input type="text" id="cli-telefono" class="searchable-client" placeholder="312 987 6543">
-            </div>
-            <div class="form-group">
-                <label for="cli-email">Email</label>
-                <input type="email" id="cli-email" class="searchable-client" placeholder="juan.perez@email.com">
-            </div>
-        </div>
-        <div style="margin-top: 15px; text-align: right;" class="no-print">
-            <button type="button" class="btn-outline" id="btn-guardar-cliente">💾 Registrar/Actualizar Cliente en Cloud</button>
-        </div>
     </div>
+</div>
 
-    <div class="card no-print">
-        <h2>📦 Añadir Artículo</h2>
-        <div class="grid-forms" style="grid-template-columns: 2fr 1fr 1fr auto; align-items: end;">
-            <div class="form-group">
-                <label for="art-nombre">Descripción del Artículo</label>
-                <input type="text" id="art-nombre" placeholder="Ej: Licencia de Software">
+<div id="app-wrapper" class="app-container">
+    <div class="container">
+        <header class="app-header no-print">
+            <div class="header-title">
+                <h1>Gestor de Presupuestos</h1>
+                <p>Realtime Database • Datos privados de tu cuenta</p>
             </div>
-            <div class="form-group">
-                <label for="art-precio">Precio Unitario ($)</label>
-                <input type="number" id="art-precio" placeholder="150000" min="0">
+            <div class="header-actions">
+                <div id="user-profile" class="user-info">
+                    <img id="user-avatar" class="user-avatar" src="" alt="Avatar">
+                    <span id="user-name">Usuario</span>
+                </div>
+                <button type="button" class="btn-outline" onclick="abrirModal()">🏢 Mi Empresa</button>
+                <button type="button" class="btn-outline btn-danger" id="btn-logout">Salir</button>
             </div>
-            <div class="form-group">
-                <label for="art-cantidad">Cantidad</label>
-                <input type="number" id="art-cantidad" value="1" min="1">
+        </header>
+
+        <div class="card">
+            <h2>👤 Datos del Cliente</h2>
+            <div id="badge-presupuesto" class="budget-badge">Presupuesto Nuevo</div>
+            <div class="grid-forms">
+                <div class="form-group">
+                    <label for="cli-nit">NIT / CC</label>
+                    <input type="text" id="cli-nit" placeholder="Ej: 1.015.123.456">
+                </div>
+                <div class="form-group">
+                    <label for="cli-nombre">Nombre Completo</label>
+                    <input type="text" id="cli-nombre" placeholder="Juan Pérez">
+                </div>
+                <div class="form-group">
+                    <label for="cli-ciudad">Ciudad</label>
+                    <input type="text" id="cli-ciudad" placeholder="Medellín">
+                </div>
+                <div class="form-group">
+                    <label for="cli-telefono">Teléfono</label>
+                    <input type="text" id="cli-telefono" placeholder="312 987 6543">
+                </div>
+                <div class="form-group">
+                    <label for="cli-email">Email</label>
+                    <input type="email" id="cli-email" placeholder="juan.perez@email.com">
+                </div>
             </div>
-            <button type="button" id="btn-add-articulo">Añadir</button>
         </div>
-    </div>
 
-    <div class="card">
-        <div class="results-header">
-            <h2>📋 Detalle del Presupuesto</h2>
-            <div class="search-bar no-print">
-                <input type="text" id="buscar-global" placeholder="Buscar artículo o autocompletar cliente...">
-                <div id="sugerencias-clientes" class="suggestions-box"></div>
+        <div class="card no-print">
+            <h2>📦 Añadir Artículo</h2>
+            <div class="grid-forms" style="grid-template-columns: 2fr 1fr 1fr auto; align-items: end;">
+                <div class="form-group">
+                    <label for="art-nombre">Descripción del Artículo</label>
+                    <input type="text" id="art-nombre" placeholder="Ej: Servicio de Programación">
+                </div>
+                <div class="form-group">
+                    <label for="art-precio">Precio Unitario ($)</label>
+                    <input type="number" id="art-precio" placeholder="150000" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="art-cantidad">Cantidad</label>
+                    <input type="number" id="art-cantidad" value="1" min="1">
+                </div>
+                <button type="button" id="btn-add-articulo">Añadir</button>
             </div>
         </div>
 
-        <table id="tabla-articulos">
-            <thead>
-                <tr>
-                    <th>Descripción</th>
-                    <th style="width: 100px;">Cantidad</th>
-                    <th style="width: 180px;">Precio Unitario</th>
-                    <th style="width: 180px;">Total Item</th>
-                    <th class="delete-col no-print" style="width: 100px;">Acción</th>
-                </tr>
-            </thead>
-            <tbody id="lista-articulos">
-                </tbody>
-        </table>
+        <div class="card">
+            <div class="results-header">
+                <h2>📋 Detalle del Presupuesto</h2>
+                <div class="search-bar no-print">
+                    <input type="text" id="buscar-global" placeholder="Buscar artículo o ID de presupuesto guardado...">
+                    <div id="sugerencias-presupuestos" class="suggestions-box"></div>
+                </div>
+            </div>
 
-        <div class="summary-box">
-            <div class="summary-row">Subtotal: <span id="val-subtotal">$0.00</span></div>
-            <div class="summary-row">IVA (19%): <span id="val-iva">$0.00</span></div>
-            <div class="summary-total">Total: <span id="val-total">$0.00</span></div>
+            <table id="tabla-articulos">
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th style="width: 100px;">Cantidad</th>
+                        <th style="width: 180px;">Precio Unitario</th>
+                        <th style="width: 180px;">Total Item</th>
+                        <th class="delete-col no-print" style="width: 100px;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-articulos">
+                    </tbody>
+            </table>
+
+            <div class="summary-box">
+                <div class="summary-row">Subtotal: <span id="val-subtotal">$0.00</span></div>
+                <div class="summary-row">IVA (19%): <span id="val-iva">$0.00</span></div>
+                <div class="summary-total">Total: <span id="val-total">$0.00</span></div>
+            </div>
         </div>
-    </div>
 
-    <div class="actions no-print">
-        <button type="button" class="btn-outline btn-danger" id="btn-limpiar">Limpiar Todo</button>
-        <button type="button" id="btn-imprimir">Imprimir / Guardar PDF</button>
+        <div class="actions no-print">
+            <button type="button" class="btn-outline btn-danger" id="btn-limpiar">Limpiar Todo</button>
+            <button type="button" class="btn-success" id="btn-guardar-presupuesto">💾 Guardar Presupuesto en Cloud</button>
+            <button type="button" id="btn-imprimir">Imprimir / Guardar PDF</button>
+        </div>
     </div>
 </div>
 
@@ -438,7 +571,7 @@
     <div class="modal">
         <button class="modal-close" id="btn-cerrar-modal-x">&times;</button>
         <h2>🏢 Configurar Mi Empresa</h2>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: -15px; margin-bottom: 20px;">Estos datos se sincronizan directamente con Firestore.</p>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: -15px; margin-bottom: 20px;">Los datos de tu negocio se almacenan de manera privada para tu cuenta.</p>
         
         <div style="display: flex; flex-direction: column; gap: 16px;">
             <div class="form-group">
@@ -469,7 +602,7 @@
             </div>
         </div>
         <div style="margin-top: 24px; text-align: right;">
-            <button type="button" id="btn-guardar-empresa">Guardar en Firebase</button>
+            <button type="button" id="btn-guardar-empresa">Guardar y Cerrar</button>
         </div>
     </div>
 </div>
@@ -480,15 +613,21 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
     import { 
-        getFirestore, 
-        doc, 
-        setDoc, 
-        getDoc, 
-        collection, 
-        getDocs 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        getAuth, 
+        signInWithPopup, 
+        GoogleAuthProvider, 
+        signOut, 
+        onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { 
+        getDatabase, 
+        ref, 
+        set, 
+        get, 
+        child 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Tu configuración exacta de Firebase
+    // Configuración de tu base de datos Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyDVhu3PF441CJdZygSACY3urWS9QuYIoVA",
         authDomain: "krol-prime.firebaseapp.com",
@@ -496,25 +635,66 @@
         storageBucket: "krol-prime.firebasestorage.app",
         messagingSenderId: "673543632486",
         appId: "1:673543632486:web:e4daf2945f2dcfdfa99fa7",
-        measurementId: "G-C66JXC8FW6"
+        measurementId: "G-C66JXC8FW6",
+        databaseURL: "https://krol-prime-default-rtdb.firebaseio.com"
     };
 
-    // Inicializar
+    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
-    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const provider = new GoogleAuthProvider();
 
+    // Variables de Estado de la App
+    let userLogged = null;
     let articulos = [];
     let filtroBusqueda = "";
-    let listaClientesCloud = []; // Guardará temporalmente los clientes para autocompletado rápido
+    let listaPresupuestosCloud = []; 
+    let idPresupuestoActual = null;
 
-    // Event Listeners
+    // Manejo de la interfaz de Login y Sesión
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            userLogged = user;
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('app-wrapper').style.display = 'block';
+            
+            // Cargar datos de la cuenta
+            document.getElementById('user-name').innerText = user.displayName || "Usuario";
+            document.getElementById('user-avatar').src = user.photoURL || "https://via.placeholder.com/150";
+
+            // Descargar datos privados de la base de datos
+            await cargarDatosEmpresa();
+            await descargarPresupuestosCloud();
+        } else {
+            userLogged = null;
+            document.getElementById('login-container').style.display = 'flex';
+            document.getElementById('app-wrapper').style.display = 'none';
+        }
+    });
+
+    // Eventos de Autenticación
+    document.getElementById('btn-login-google').addEventListener('click', () => {
+        signInWithPopup(auth, provider)
+            .catch(error => {
+                alert("Error al iniciar sesión con Google: " + error.message);
+            });
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+        signOut(auth).then(() => {
+            limpiarTodo(true);
+        });
+    });
+
+    // Event Listeners de la App
     document.getElementById('btn-add-articulo').addEventListener('click', agregarArticulo);
-    document.getElementById('buscar-global').addEventListener('input', buscarYAutocompletar);
-    document.getElementById('btn-limpiar').addEventListener('click', limpiarTodo);
+    document.getElementById('buscar-global').addEventListener('input', buscarYAutocompletarPresupuestos);
+    document.getElementById('btn-limpiar').addEventListener('click', () => limpiarTodo(false));
     document.getElementById('btn-imprimir').addEventListener('click', imprimirPresupuesto);
     document.getElementById('btn-guardar-empresa').addEventListener('click', guardarEmpresaFirebase);
-    document.getElementById('btn-guardar-cliente').addEventListener('click', guardarClienteFirebase);
+    document.getElementById('btn-guardar-presupuesto').addEventListener('click', guardarPresupuestoFirebase);
     document.getElementById('btn-cerrar-modal-x').addEventListener('click', cerrarModal);
 
     window.abrirModal = function() {
@@ -524,32 +704,14 @@
         document.getElementById('modal-empresa').style.display = 'none';
     }
 
-    // Cargar datos al iniciar
-    async function inicializarApp() {
-        await cargarDatosEmpresa();
-        await descargarClientesCloud();
-    }
-    inicializarApp();
-
-    // Descarga la lista de clientes para autocompletar súper rápido
-    async function descargarClientesCloud() {
-        try {
-            const querySnapshot = await getDocs(collection(db, "clientes"));
-            listaClientesCloud = [];
-            querySnapshot.forEach((doc) => {
-                listaClientesCloud.push(doc.data());
-            });
-        } catch (error) {
-            console.error("Error cargando clientes desde Firestore:", error);
-        }
-    }
-
+    // CARGAR INFORMACIÓN CORPORATIVA DESDE RTDB (Ruta privada: /users/{uid}/mi_empresa)
     async function cargarDatosEmpresa() {
+        if (!userLogged) return;
         try {
-            const docRef = doc(db, "configuracion", "mi_empresa");
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const data = docSnap.data();
+            const dbRef = ref(db);
+            const snapshot = await get(child(dbRef, `users/${userLogged.uid}/mi_empresa`));
+            if (snapshot.exists()) {
+                const data = snapshot.val();
                 document.getElementById('emp-nit').value = data.nit || '';
                 document.getElementById('emp-nombre').value = data.nombre || '';
                 document.getElementById('emp-ciudad').value = data.ciudad || '';
@@ -558,11 +720,12 @@
                 document.getElementById('emp-notas').value = data.notas || '';
             }
         } catch (error) {
-            console.error("Error cargando configuración:", error);
+            console.error("Error cargando empresa:", error);
         }
     }
 
     async function guardarEmpresaFirebase() {
+        if (!userLogged) return;
         const datos = {
             nit: document.getElementById('emp-nit').value,
             nombre: document.getElementById('emp-nombre').value,
@@ -573,106 +736,137 @@
         };
 
         try {
-            await setDoc(doc(db, "configuracion", "mi_empresa"), datos);
-            alert("¡Sincronizado! Datos de tu empresa guardados en la nube.");
+            await set(ref(db, `users/${userLogged.uid}/mi_empresa`), datos);
+            alert("¡Sincronizado! Datos de tu empresa actualizados.");
             cerrarModal();
         } catch (error) {
-            alert("Error al guardar en Firebase.");
+            alert("Error al guardar en Realtime Database.");
         }
     }
 
-    async function guardarClienteFirebase() {
-        const nit = document.getElementById('cli-nit').value.trim();
-        const nombre = document.getElementById('cli-nombre').value.trim();
-        if (!nit || !nombre) {
-            alert("Completa al menos NIT y Nombre para poder guardar.");
+    // DESCARGAR TODOS LOS PRESUPUESTOS DEL USUARIO ACTIVO (Ruta privada: /users/{uid}/presupuestos)
+    async function descargarPresupuestosCloud() {
+        if (!userLogged) return;
+        try {
+            const dbRef = ref(db);
+            const snapshot = await get(child(dbRef, `users/${userLogged.uid}/presupuestos`));
+            listaPresupuestosCloud = [];
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                for (let key in data) {
+                    listaPresupuestosCloud.push({ id: key, ...data[key] });
+                }
+            }
+        } catch (error) {
+            console.error("Error al descargar presupuestos:", error);
+        }
+    }
+
+    // GUARDAR PRESUPUESTO EN RTDB
+    async function guardarPresupuestoFirebase() {
+        if (!userLogged) return;
+        const cliNombre = document.getElementById('cli-nombre').value.trim();
+        const cliNit = document.getElementById('cli-nit').value.trim();
+
+        if (!cliNombre || !cliNit) {
+            alert("Por favor, introduce el nombre y NIT del cliente antes de guardar el presupuesto.");
             return;
         }
 
-        const datosCliente = {
-            nit: nit,
-            nombre: nombre,
-            ciudad: document.getElementById('cli-ciudad').value,
-            telefono: document.getElementById('cli-telefono').value,
-            email: document.getElementById('cli-email').value,
+        if (articulos.length === 0) {
+            alert("El presupuesto debe tener al menos un artículo para guardarse.");
+            return;
+        }
+
+        if (!idPresupuestoActual) {
+            idPresupuestoActual = "PR-" + Math.floor(100000 + Math.random() * 900000);
+        }
+
+        const subtotal = calcularSubtotal();
+        const iva = subtotal * 0.19;
+        const total = subtotal + iva;
+
+        const presupuestoCompleto = {
+            cliente: {
+                nombre: cliNombre,
+                nit: cliNit,
+                ciudad: document.getElementById('cli-ciudad').value,
+                telefono: document.getElementById('cli-telefono').value,
+                email: document.getElementById('cli-email').value
+            },
+            articulos: articulos,
+            totales: {
+                subtotal: subtotal,
+                iva: iva,
+                total: total
+            },
+            fechaGuardado: new Date().toISOString()
         };
 
         try {
-            await setDoc(doc(db, "clientes", nit), datosCliente);
-            alert("¡Cliente guardado exitosamente en tu base de datos!");
-            await descargarClientesCloud(); // Recargar localmente
+            await set(ref(db, `users/${userLogged.uid}/presupuestos/${idPresupuestoActual}`), presupuestoCompleto);
+            document.getElementById('badge-presupuesto').innerText = `Presupuesto: ${idPresupuestoActual}`;
+            alert(`¡Presupuesto ${idPresupuestoActual} guardado con éxito!`);
+            await descargarPresupuestosCloud();
         } catch (error) {
-            alert("Error al guardar cliente en Firestore.");
+            console.error("Error al guardar:", error);
+            alert("Error al guardar presupuesto en Realtime Database.");
         }
     }
 
-    // Buscador Inteligente Global + Autocompletar Clientes
-    function buscarYAutocompletar() {
+    // BUSCADOR DE PRESUPUESTOS GUARDADOS EN LA NUBE
+    function buscarYAutocompletarPresupuestos() {
         filtroBusqueda = document.getElementById('buscar-global').value.toLowerCase().trim();
-        const boxSugerencias = document.getElementById('sugerencias-clientes');
+        const boxSugerencias = document.getElementById('sugerencias-presupuestos');
         boxSugerencias.innerHTML = '';
 
         if (!filtroBusqueda) {
             boxSugerencias.style.display = 'none';
-            removerResaltados();
-            actualizarInterfaz(false);
+            actualizarInterfaz();
             return;
         }
 
-        // Buscar coincidencias locales en la interfaz
-        const camposCliente = document.querySelectorAll('.searchable-client');
-        let coincidenciaEnPantalla = false;
-
-        camposCliente.forEach(campo => {
-            const valorCampo = campo.value.toLowerCase();
-            if (valorCampo.includes(filtroBusqueda)) {
-                campo.classList.add('match-highlight');
-                coincidenciaEnPantalla = true;
-            } else {
-                campo.classList.remove('match-highlight');
-            }
-        });
-
-        // Buscar coincidencias en la base de datos descargada
-        const sugerenciasFiltradas = listaClientesCloud.filter(c => 
-            c.nombre.toLowerCase().includes(filtroBusqueda) || 
-            c.nit.toLowerCase().includes(filtroBusqueda)
+        const coincidencias = listaPresupuestosCloud.filter(p => 
+            p.id.toLowerCase().includes(filtroBusqueda) || 
+            p.cliente.nombre.toLowerCase().includes(filtroBusqueda) ||
+            p.cliente.nit.toLowerCase().includes(filtroBusqueda)
         );
 
-        if (sugerenciasFiltradas.length > 0) {
+        if (coincidencias.length > 0) {
             boxSugerencias.style.display = 'block';
-            sugerenciasFiltradas.forEach(cliente => {
+            coincidencias.forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'suggestion-item';
-                div.innerHTML = `👤 <strong>${cliente.nombre}</strong> (NIT: ${cliente.nit})`;
-                div.addEventListener('click', () => cargarClienteEnCampos(cliente));
+                div.innerHTML = `📂 <strong>${p.id}</strong> - ${p.cliente.nombre} (${formatearMoneda(p.totales.total)})`;
+                div.addEventListener('click', () => cargarPresupuestoCompleto(p));
                 boxSugerencias.appendChild(div);
             });
         } else {
             boxSugerencias.style.display = 'none';
         }
 
-        actualizarInterfaz(coincidenciaEnPantalla);
+        actualizarInterfaz();
     }
 
-    function cargarClienteEnCampos(cliente) {
-        document.getElementById('cli-nit').value = cliente.nit || '';
-        document.getElementById('cli-nombre').value = cliente.nombre || '';
-        document.getElementById('cli-ciudad').value = cliente.ciudad || '';
-        document.getElementById('cli-telefono').value = cliente.telefono || '';
-        document.getElementById('cli-email').value = cliente.email || '';
+    function cargarPresupuestoCompleto(presupuesto) {
+        idPresupuestoActual = presupuesto.id;
+        document.getElementById('badge-presupuesto').innerText = `Presupuesto: ${idPresupuestoActual}`;
+
+        document.getElementById('cli-nit').value = presupuesto.cliente.nit || '';
+        document.getElementById('cli-nombre').value = presupuesto.cliente.nombre || '';
+        document.getElementById('cli-ciudad').value = presupuesto.cliente.ciudad || '';
+        document.getElementById('cli-telefono').value = presupuesto.cliente.telefono || '';
+        document.getElementById('cli-email').value = presupuesto.cliente.email || '';
+
+        articulos = presupuesto.articulos || [];
         
-        document.getElementById('sugerencias-clientes').style.display = 'none';
         document.getElementById('buscar-global').value = '';
-        removerResaltados();
-        actualizarInterfaz(false);
+        document.getElementById('sugerencias-presupuestos').style.display = 'none';
+        filtroBusqueda = "";
+        actualizarInterfaz();
     }
 
-    function removerResaltados() {
-        document.querySelectorAll('.searchable-client').forEach(c => c.classList.remove('match-highlight'));
-    }
-
-    // Agregar/Eliminar artículos
+    // Funciones lógicas internas
     function agregarArticulo() {
         const descInput = document.getElementById('art-nombre');
         const precioInput = document.getElementById('art-precio');
@@ -683,7 +877,7 @@
         const cantidad = parseInt(cantInput.value);
 
         if (!descripcion || isNaN(precio) || precio <= 0 || isNaN(cantidad) || cantidad <= 0) {
-            alert("Introduce datos de artículo válidos.");
+            alert("Ingresa datos de artículo válidos.");
             return;
         }
 
@@ -702,6 +896,10 @@
     }
     window.eliminarArticulo = eliminarArticulo;
 
+    function calcularSubtotal() {
+        return articulos.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+    }
+
     function formatearMoneda(valor) {
         return new Intl.NumberFormat('es-CO', {
             style: 'currency',
@@ -710,19 +908,19 @@
         }).format(valor);
     }
 
-    function actualizarInterfaz(coincidenciaEnCliente = false) {
+    function actualizarInterfaz() {
         const tbody = document.getElementById('lista-articulos');
         tbody.innerHTML = '';
-        let subtotal = 0;
+        let subtotalFiltrado = 0;
 
         const articulosFiltrados = articulos.filter(item => {
-            if (coincidenciaEnCliente || !filtroBusqueda) return true;
+            if (!filtroBusqueda) return true;
             return item.descripcion.toLowerCase().includes(filtroBusqueda);
         });
 
         articulosFiltrados.forEach(item => {
             const totalItem = item.precio * item.cantidad;
-            subtotal += totalItem;
+            subtotalFiltrado += totalItem;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -737,7 +935,7 @@
             tbody.appendChild(tr);
         });
 
-        const baseCalculo = (filtroBusqueda && !coincidenciaEnCliente) ? subtotal : articulos.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+        const baseCalculo = filtroBusqueda ? subtotalFiltrado : calcularSubtotal();
         const iva = baseCalculo * 0.19;
         const total = baseCalculo + iva;
 
@@ -752,7 +950,7 @@
         const empCiudad = document.getElementById('emp-ciudad').value || '';
         const empTel = document.getElementById('emp-telefono').value || '';
         const empEmail = document.getElementById('emp-email').value || '';
-        const empNotas = document.getElementById('emp-notes')?.value || document.getElementById('emp-notas').value || '';
+        const empNotas = document.getElementById('emp-notas').value || '';
 
         const printSection = document.getElementById('print-empresa');
         printSection.innerHTML = `
@@ -765,19 +963,18 @@
                 </div>
                 <div style="text-align: right;">
                     <h2 style="margin: 0; color: #475569; font-size: 1.5rem; text-transform: uppercase;">Presupuesto</h2>
+                    <p style="margin: 5px 0 0 0; font-size: 0.95rem;"><strong>Número:</strong> ${idPresupuestoActual || 'Borrador'}</p>
                     <p style="margin: 5px 0 0 0; font-size: 0.95rem;"><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</p>
                 </div>
             </div>
-            ${empNotas ? `<div style="margin-top: 15px; padding: 10px; background: #f8fafc; border-left: 4px solid #2563eb; font-size: 0.9rem;"><strong>Notas / Condiciones:</strong> ${empNotas}</div>` : ''}
+            ${empNotas ? `<div style="margin-top: 15px; padding: 10px; background: #f8fafc; border-left: 4px solid #2563eb; font-size: 0.9rem;"><strong>Notas:</strong> ${empNotas}</div>` : ''}
         `;
-
         window.print();
     }
 
-    function limpiarTodo() {
-        if (confirm("¿Estás seguro de que deseas vaciar este presupuesto?")) {
+    function limpiarTodo(forzar = false) {
+        if (forzar || confirm("¿Estás seguro de que deseas vaciar este presupuesto?")) {
             document.querySelectorAll('input, textarea').forEach(input => {
-                input.classList.remove('match-highlight');
                 if (input.id === 'art-cantidad') {
                     input.value = '1';
                 } else if (input.id !== 'buscar-global') {
@@ -786,11 +983,12 @@
             });
             articulos = [];
             filtroBusqueda = "";
+            idPresupuestoActual = null;
             document.getElementById('buscar-global').value = '';
+            document.getElementById('badge-presupuesto').innerText = 'Presupuesto Nuevo';
             actualizarInterfaz();
         }
     }
 </script>
-
 </body>
 </html>
