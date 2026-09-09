@@ -8,12 +8,13 @@ router.post("/login", usuariosController.login);
 router.get("/usuario/:id", usuariosController.obtenerUsuario);
 router.get("/usuario/:id/heroes", usuariosController.obtenerHeroes);
 router.post("/usuario/:id/heroes/:heroe/desbloquear", usuariosController.desbloquearHeroe);
-router.get("/prueba-ruta", (req, res) => {
-  console.log("🔥 PRUEBA-RUTA RECIBIDA");
-  console.log("Método:", req.method);
-  console.log("Origen:", req.headers.origin);
+router.post("/prueba-ruta-post", (req, res) => {
+  console.log("🔥 PRUEBA-RUTA-POST RECIBIDA");
 
-  res.status(200).send("LAS RUTAS FUNCIONAN");
+  res.status(200).json({
+    mensaje: "POST FUNCIONA",
+    prueba: true
+  });
 });
 router.post("/usuario/:id/canjear-qr", usuariosController.canjearQR);
 router.post("/usuario/:id/heroes/:heroe/experiencia", usuariosController.agregarExperiencia);
