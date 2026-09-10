@@ -16,6 +16,14 @@ router.post("/prueba-ruta-post", (req, res) => {
     prueba: true
   });
 });
+router.get("/prueba-ruta", (req, res) => {
+  console.log("🔥 PRUEBA-RUTA-GET RECIBIDA");
+
+  res.status(200).json({
+    mensaje: "GET FUNCIONA",
+    prueba: true
+  });
+});
 router.post("/usuario/:id/canjear-qr", usuariosController.canjearQR);
 router.post("/usuario/:id/heroes/:heroe/experiencia", usuariosController.agregarExperiencia);
 
