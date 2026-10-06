@@ -16,9 +16,15 @@ exports.registro = async (req, res) => {
       nombre,
       correo,
       contraseña,
-      monedas: 500,
+     monedas: 500,
       gemas: 100,
       copas: 0,
+
+      // Clasificación
+      rango: 1,
+      grupoClasificacion: null,
+      temporadaClasificacion: null,
+      
       heroes: {
         guerrero_fuego: {
           desbloqueado: true,
@@ -28,10 +34,10 @@ exports.registro = async (req, res) => {
       },
       creado: new Date().toISOString()
     });
-console.log("RESPUESTA REGISTRO:", {
+    console.log("RESPUESTA REGISTRO:", {
     mensaje: "Usuario registrado correctamente",
     id
-});
+    });
     res.send({
       mensaje: "Usuario registrado correctamente",
       id
