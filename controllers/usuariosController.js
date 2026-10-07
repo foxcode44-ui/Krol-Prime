@@ -374,3 +374,53 @@ exports.canjearQR = async (req, res) => {
     });
   }
 };
+
+exports.recompensaVictoria = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    if (!id) {
+      return res.status(400).json({
+        error: "Falta el ID del usuario"
+      });
+    }
+
+    const usuarioRef = db.ref("usuarios/" + id);
+    const resultado = await usuarioRef.transaction((usuario) => {
+      if (usuario === null) {
+        return;
+      }
+
+      usuario.copas = Number(usuario.copas || 0) + 10;
+      usuario.monedas = Number(usuario.monedas || 0) + 100;
+      usuario.gemas = Number(usuario.gemas || 0) + 5;
+
+      return usuario;
+    });
+
+    if (!resultado.committed) {
+      return res.status(404).json({
+        error: "Usuario no encontrado"
+      });
+    }
+
+    const usuarioActualizado = resultado.snapshot.val();
+
+    res.json({
+      mensaje: "Recompensa de victoria aplicada",
+      copasGanadas: 10,
+      monedasGanadas: 100,
+      gemasGanadas: 5,
+      copas: usuarioActualizado.copas,
+      monedas: usuarioActualizado.monedas,
+      gemas: usuarioActualizado.gemas
+    });
+
+  } catch (error) {
+    console.error("ERROR RECOMPENSA VICTORIA:", error);
+
+    res.status(500).json({
+      error: error.message
+    });
+  }
+};

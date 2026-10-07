@@ -25,6 +25,11 @@ router.post(
   usuariosController.canjearQR
 );
 
+router.post(
+  "/usuario/:id/recompensa-victoria",
+  usuariosController.recompensaVictoria
+);
+
 // ========================================
 // CLASIFICACIÓN
 // ========================================
